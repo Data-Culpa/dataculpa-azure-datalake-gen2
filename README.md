@@ -1,2 +1,2 @@
-# dataculpa-azure-blob
-Azure Blob storage connectors for Data Culpa
+# dataculpa-azure-datalake-gen2
+Azure Data Lake Gen2 storage connectors for Data Culpa
