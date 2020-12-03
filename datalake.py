@@ -23,16 +23,24 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-#import dateutil
+import logging
 import os
 import uuid
 import sqlite3
 import sys
+#import tempfile
+
 from dateutil.parser import parse as DateUtilParse
+
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.core._match_conditions import MatchConditions
 from azure.storage.filedatalake._models import ContentSettings
 
+from dataculpa import DataCulpaValidator
+
+# Need to remember how to disable this for other packages... e.g., Azure 
+# stuff leaks a lot of crud.
+#logging.basicConfig(format='%(asctime)s %(message)s', level=logging.WARN)
 
 service_client = None
 
@@ -60,6 +68,21 @@ class Config:
         self.file_ext         = os.environ.get('AZURE_FILE_EXT')
         self.storage_cache_db = os.environ.get('AZURE_STORAGE_CACHE')
         self.error_log        = os.environ.get('AZURE_ERROR_LOG', "error.log")
+
+        # Data Culpa parameters
+        self.pipeline_name      = os.environ.get('DC_PIPELINE_NAME')
+        self.pipeline_env       = os.environ.get('DC_PIPELINE_ENV', 'default')
+        self.pipeline_stage     = os.environ.get('DC_PIPELINE_STAGE', 'default')
+        self.pipeline_version   = os.environ.get('DC_PIPELINE_VERSION', 'default')
+        self.dc_host            = os.environ.get('DC_HOST')
+        self.dc_port            = os.environ.get('DC_PORT')
+        self.dc_protocol        = os.environ.get('DC_PROTOCOL')
+        self.dc_secret          = os.environ.get('DC_SECRET')
+
+        self.directory_is_stage = os.environ.get('DC_DIR_IS_STAGE', False)
+
+        if self.directory_is_stage:
+            assert self.pipeline_stage is None, "cannot set both DC_PIPELINE_STAGE and DC_DIR_IS_STAGE"
 
 fcache = {} 
 new_cache = {}
@@ -121,8 +144,47 @@ def FlushNewCache():
     c.commit()
     return
 
+
+def NewDataCulpaHandle(pipeline_stage=None):
+    if pipeline_stage is None:
+        pipeline_stage = gConfig.pipeline_stage
+
+    dc = DataCulpaValidator(gConfig.pipeline_name,
+                            pipeline_environment=gConfig.pipeline_env,
+                            pipeline_stage=pipeline_stage,
+                            pipeline_version=gConfig.pipeline_version,
+                            protocol=gConfig.dc_protocol, 
+                            dc_host=gConfig.dc_host, 
+                            dc_port=gConfig.dc_port)
+    return dc
+
 def ProcessDateFile(fs_client, file_path):
     print(">> %s is new and needs processing, here we go!" % file_path)
+
+    # Assume a CSV blob, which we will push up.
+
+    # FIXME: tease out the top-level directory for pipeline_stage.
+    dc = NewDataCulpaHandle()
+
+    # FIXME: add short-circuit approach; if we're on the same 
+    # machine as the DC controller, no need to move the data twice; we just
+    # need to fetch it... but that's for another day.
+
+    # seems we need the directory handle... hopefully Azure is a forward slash environment
+    dir_path = os.path.dirname(file_path)
+    basename = os.path.basename(file_path)
+    d_client = fs_client.get_directory_client(dir_path)
+    f_client = d_client.get_file_client(basename)
+    download = f_client.download_file()
+    downloaded_bytes = download.readall()
+    
+    tmp_name = "tmp-" + basename
+    fp = open(tmp_name, 'wb')
+    fp.write(downloaded_bytes)
+    fp.close()
+
+    worked = dc.load_csv_file(tmp_name)
+    print("worked:", worked)
     return
 
 def WalkPaths(fs_client, path):
