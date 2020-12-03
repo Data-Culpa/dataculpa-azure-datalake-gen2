@@ -1,6 +1,6 @@
 #
 # datalake.py
-# Data Culpa Python Client
+# Data Culpa Azure Data Lake Gen2 Connector
 #
 # Copyright (c) 2020 Data Culpa, Inc.
 #
@@ -81,20 +81,20 @@ def LoadCache():
 
     c = sqlite3.connect(fn)
     if needs_tables:
-        c.execute("create table cache (filename unique, last_mod_str)")
+        # FIXME: Well, my original idea for this was that we'd just keep the Azure modified 
+        # FIXME: timestamp as a string, but sqlite helpfully changes the strings to a date object
+        # FIXME: So... we could keep a hash or something, I suppose, or we can wait til datetime
+        # FIXME: parsing bites us, which you know is going to happen.
+        c.execute("create table cache (filename text unique, last_mod_str text)")
     # endif
 
     r = c.execute("select filename, last_mod_str from cache")
-    print(r)
-    print(r.rowcount)
     for row in r:
-        print(row)
         (filename, last_mod_str) = row
         last_mod_dt = DateUtilParse(last_mod_str)
         fcache[filename] = last_mod_dt
     # endfor
 
-    print("cache:", fcache)
     return
 
 def FlushNewCache():
@@ -128,7 +128,6 @@ def ProcessDateFile(fs_client, file_path):
 def WalkPaths(fs_client, path):
     # Crazy, no recursion needed--this is very handy.
     paths = fs_client.get_paths(path=path) # iterate over the root.
-    print("paths = ", paths)
     for p in paths:
         if p.is_directory:
             continue
@@ -138,16 +137,22 @@ def WalkPaths(fs_client, path):
 
         # does it exist in the old cache?
         existing = fcache.get(p.name)
+        if existing is not None:
+            if lm_time == existing:
+                #print("skipping for %s" % p.name)
+                continue
+            #else:
+                #print("__%s__ != __%s__" % (p.last_modified, existing))
+
         if existing is None:
-            ProcessDateFile(fs_client, p.name)
-            new_cache[p.name] = p.last_modified
-        # endif
+            print("new file %s" % p.name)
 
+        if existing != p.last_modified:
+            print("%s has changed; reprocessing..." % p.name)
 
-        # check the cache if it's new.
-#        print(dir(p))
-#        print("")
-
+        ProcessDateFile(fs_client, p.name)
+        new_cache[p.name] = p.last_modified
+    # endfor
 
     # flush out the new_cache entries.
     FlushNewCache()
