@@ -18,12 +18,19 @@ Azure Data Lake Gen2 storage connectors for Data Culpa
 > AZURE_STORAGE_ACCOUNT = name_here
 > 
 > \# Set to blank to not cache any metadata locally with the pipeline.
+> 
 > \# The question here is whether the data lake is taking in new data (appending)
+> 
 > \# or when this pipeline runs, is it always fresh data?
+> 
 > \# The default example is to put the metadata into a sqlite cache.
+> 
 > \# 
+> 
 > \# In a future version of the pipeline, we could store our cached data in the data lake or 
+> 
 > \# somewhere else in Azure...I guess all we really need is the last time that we ran per
+> 
 > \# object successfully.
 >
 > AZURE_STORAGE_CACHE = cache.db
@@ -35,8 +42,11 @@ Azure Data Lake Gen2 storage connectors for Data Culpa
 > \# Data Culpa Server
 >
 > DC_HOST = 192.168.1.13
+>
 > DC_PORT = 7777
+>
 > DC_PROTOCOL = 'http'
+>
 > DC_SECRET = your_secret_here
 > 
 > \# Data Culpa Behavior
@@ -45,9 +55,13 @@ Azure Data Lake Gen2 storage connectors for Data Culpa
 > DC_PIPELINE_VERSION = '1.0'
 > 
 > \# Turn on this parameter to make each top-level directory in the Data Lake go 
+> 
 > \# to its own 'stage' step in the pipeline.  We might actually want the directory 
+> 
 > \# to map into Data Culpa as root/<pipeline>/<stage> or some other mapping provided
+> 
 > \# by the user somehow... not sure how people organize this stuff or how much 'fan out'
+> 
 > \# of this pipeline importer people will wind up with.
 > \#DC_DIR_IS_STAGE = 
 
