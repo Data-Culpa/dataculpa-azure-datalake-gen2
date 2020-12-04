@@ -50,6 +50,10 @@ DC_PIPELINE_VERSION = '1.0'
 #DC_DIR_IS_STAGE = 
 ```
 
+## Operation
+
+datalake.py can be kicked off from cron or any similar orchestration utility of your choosing.
+
 ## Known Limitations
 
 1. API key-only authentication (i.e., needs some work for Azure AD).
