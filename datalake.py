@@ -23,6 +23,8 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
+import argparse
+import dotenv
 import logging
 import os
 import uuid
@@ -222,31 +224,43 @@ def WalkPaths(fs_client, path):
     return
 
 
-def RunTest():
+def main():
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-e", "--env",
+                    help="Use provided env file instead of default .env")
+
+    args = ap.parse_args()
+
+    env_path = ".env"
+    if args.env:
+        env_path = args.env
+    if not os.path.exists(env_path):
+        sys.stderr.write("Error: missing env file at %s\n" % env_path)
+        os._exit(1)
+        return
+    # endif
+
+    dotenv.load_dotenv()
+
     api_key = os.environ.get('AZURE_API_KEY')
     storage_account = os.environ.get('AZURE_STORAGE_ACCOUNT')
+
+    assert api_key is not None
+    assert storage_account is not None
 
     global gConfig
     gConfig = Config()
     LoadCache()
 
-    assert api_key is not None
-    assert storage_account is not None
     ConnectByAccountKey(storage_account, api_key)
 
     file_system_client = service_client.get_file_system_client(file_system="dctest1")
-    #print(file_system_client)
     
     WalkPaths(file_system_client, "")
-
-
     return
 
 
-
-
 if __name__ == "__main__":
-    import dotenv
-    dotenv.load_dotenv()
+    main()
 
-    RunTest()

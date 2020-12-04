@@ -1,12 +1,13 @@
 # dataculpa-azure-datalake-gen2
 Azure Data Lake Gen2 storage connectors for Data Culpa
 
+This connector bridges files storage in an Azure Data Lake to Data Culpa Validator.
 
 ## Getting Started
 
 0. Identify the host you want to run the pipeline on; this can be run on the same host as a Data Culpa Validator controller, or it can be run on some other host. The host will need to be able to access the Azure Data Lake and the Data Culpa Validator controller.
 1. Clone the repo (or just datalake.py)
-2. Install python dependencies:
+2. Install python dependencies (python3):
 
 ```
 pip install python-dotenv azure-storage-file-datalake
@@ -48,6 +49,12 @@ DC_PIPELINE_VERSION = '1.0'
 # by the user somehow... not sure how people organize this stuff or how much 'fan out'
 # of this pipeline importer people will wind up with.
 #DC_DIR_IS_STAGE = 
+```
+
+Use multiple environment files to support multiple data lakes and pass in the environment file:
+
+```
+datalake.py -e <env file>
 ```
 
 ## Operation
