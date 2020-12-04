@@ -8,7 +8,8 @@ Azure Data Lake Gen2 storage connectors for Data Culpa
 1. Clone the repo (or just datalake.py)
 2. Install python dependencies:
 
-> pip install python-dotenv azure-storage-file-datalake
+```pip install python-dotenv azure-storage-file-datalake
+```
 3. Install the Data Culpa python client and configure your PYTHONPATH to include the dataculpa/ directory.  (Coming soon: pip package.)
 4. Create a .env file with the following keys:
 
