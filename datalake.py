@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # datalake.py
 # Data Culpa Azure Data Lake Gen2 Connector
@@ -32,6 +34,7 @@ import sqlite3
 import sys
 #import tempfile
 
+
 from dateutil.parser import parse as DateUtilParse
 
 from azure.storage.filedatalake import DataLakeServiceClient
@@ -39,6 +42,16 @@ from azure.core._match_conditions import MatchConditions
 from azure.storage.filedatalake._models import ContentSettings
 
 from dataculpa import DataCulpaValidator
+
+#for k,v in  logging.Logger.manager.loggerDict.items():
+#    if k.find(".") > 0:
+#        continue      
+#    print(k)  
+
+for logger_name in ['urllib3', 'azure']:
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.WARN)
+
 
 # Need to remember how to disable this for other packages... e.g., Azure 
 # stuff leaks a lot of crud.
@@ -58,12 +71,6 @@ def ConnectByAccountKey(storage_account_name, storage_account_key):
         print(e)
 
     return
-
-
-def ConnectByAzureAD():
-    print("not implemented")
-    return
-
 
 class Config:
     def __init__(self):
@@ -161,6 +168,10 @@ def NewDataCulpaHandle(pipeline_stage=None):
     return dc
 
 def ProcessDateFile(fs_client, file_path):
+    if gConfig.file_ext is not None:
+        if not file_path.endswith(gConfig.file_ext):
+            print(">> %s does not match configured file_ext %s; skipping" % (file_path, gConfig.file_ext))
+            return
     print(">> %s is new and needs processing, here we go!" % file_path)
 
     # Assume a CSV blob, which we will push up.
@@ -185,8 +196,22 @@ def ProcessDateFile(fs_client, file_path):
     fp.write(downloaded_bytes)
     fp.close()
 
-    worked = dc.load_csv_file(tmp_name)
-    print("worked:", worked)
+    try:
+        if tmp_name.endswith(".csv"):
+            worked = dc.load_csv_file(tmp_name)
+            print("worked:", worked)
+        elif tmp_name.endswith(".json"):
+            # load it and send it?
+            pass
+    except Exception as e:
+        # try to remove the file
+        os.unlink(tmp_name)
+        # pass the exception up
+        raise e
+
+    # remove the file
+    os.unlink(tmp_name)
+
     return
 
 def WalkPaths(fs_client, path):
@@ -223,6 +248,7 @@ def WalkPaths(fs_client, path):
 
     return
 
+gConfig = None
 
 def main():
 
@@ -246,8 +272,14 @@ def main():
     api_key = os.environ.get('AZURE_API_KEY')
     storage_account = os.environ.get('AZURE_STORAGE_ACCOUNT')
 
+    fs_name = os.environ.get('AZURE_FILESYSTEM_NAME', None)
+        
     assert api_key is not None
     assert storage_account is not None
+
+    if fs_name is None:
+        sys.stderr.write("Error: missing AZURE_FILESYSTEM_NAME")
+        os._exit(2)
 
     global gConfig
     gConfig = Config()
@@ -255,9 +287,11 @@ def main():
 
     ConnectByAccountKey(storage_account, api_key)
 
-    file_system_client = service_client.get_file_system_client(file_system="dctest1")
+    file_system_client = service_client.get_file_system_client(file_system=fs_name)
     
-    WalkPaths(file_system_client, "")
+    root_path = os.environ.get('AZURE_ROOT_PATH', "")
+
+    WalkPaths(file_system_client, root_path)
     return
 
 

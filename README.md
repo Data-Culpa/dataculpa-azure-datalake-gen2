@@ -30,6 +30,9 @@ AZURE_STORAGE_ACCOUNT = name_here
 # object successfully.
 AZURE_STORAGE_CACHE = cache.db
 
+# Only process files with this file extension (TODO: support a list of file extensions)
+AZURE_FILE_EXT=.csv
+
 # Error log file (path)
 AZURE_ERROR_LOG=error.log
 
