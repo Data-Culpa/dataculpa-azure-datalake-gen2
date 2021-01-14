@@ -67,5 +67,9 @@ datalake.py can be kicked off from cron or any similar orchestration utility of 
 ## Known Limitations
 
 1. API key-only authentication (i.e., needs some work for Azure AD).
-2. CSV files only (Data Culpa supports more formats; this is just the library).
+2. CSV or JSON files only at this time.
 3. Some assumptions about how to organize the data in Data Culpa that may not apply to all users.
+
+## SaaS deployment
+
+Our hosted SaaS includes Azure Data Lake and other connectors and a GUI for configuration. If you'd like to try it out before general availability, drop a line to hello@dataculpa.com.
