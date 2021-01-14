@@ -10,7 +10,7 @@ This connector bridges files storage in an Azure Data Lake to Data Culpa Validat
 2. Install python dependencies (python3):
 
 ```
-pip install python-dotenv azure-storage-file-datalake
+$ (pip3 or) pip install python-dotenv azure-storage-file-datalake
 ```
 3. Install the [Data Culpa python client](https://github.com/Data-Culpa/openclients) and configure your ```PYTHONPATH``` to include the ```dataculpa/``` directory.  (Coming soon: pip package.)
 4. Create a .env file with the following keys:
