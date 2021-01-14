@@ -25,15 +25,18 @@ AZURE_STORAGE_ACCOUNT = name_here
 # or when this pipeline runs, is it always fresh data?
 # The default example is to put the metadata into a sqlite cache.
 # 
-# In a future version of the pipeline, we could store our cached data in the data lake or 
-# somewhere else in Azure...I guess all we really need is the last time that we ran per
-# object successfully.
+# In a future version of the pipeline, we could store our cached data in the 
+# data lake or somewhere else in Azure...I guess all we really need is the 
+# last time that we ran per object successfully.
 AZURE_STORAGE_CACHE = cache.db
 
-# Only process files with this file extension (TODO: support a list of file extensions)
+# Only process files with this file extension (TODO: support a list of file
+# extensions)
+# This can be set to .csv or .json
 AZURE_FILE_EXT=.csv
 
 # Error log file (path)
+# FIXME: Not yet implemented
 AZURE_ERROR_LOG=error.log
 
 # Data Culpa Server
@@ -46,12 +49,6 @@ DC_SECRET = your_secret_here
 DC_PIPELINE_NAME = 'azure-dl-test'
 DC_PIPELINE_VERSION = '1.0'
 
-# Turn on this parameter to make each top-level directory in the Data Lake go 
-# to its own 'stage' step in the pipeline.  We might actually want the directory 
-# to map into Data Culpa as root/<pipeline>/<stage> or some other mapping provided
-# by the user somehow... not sure how people organize this stuff or how much 'fan out'
-# of this pipeline importer people will wind up with.
-#DC_DIR_IS_STAGE = 
 ```
 
 Use multiple environment files to support multiple data lakes and pass in the environment file:
@@ -62,13 +59,17 @@ datalake.py -e <env file>
 
 ## Operation
 
-datalake.py can be kicked off from cron or any similar orchestration utility of your choosing.
+```datalake.py``` can be kicked off from cron or any similar orchestration utility of your choosing.
 
 ## Known Limitations
 
 1. API key-only authentication (i.e., needs some work for Azure AD).
 2. CSV or JSON files only at this time.
 3. Some assumptions about how to organize the data in Data Culpa that may not apply to all users.
+
+## Future Improvements
+
+There are many improvements we are considering for this module. You can get in touch by writing to hello@dataculpa.com or opening issues in this repository.
 
 ## SaaS deployment
 

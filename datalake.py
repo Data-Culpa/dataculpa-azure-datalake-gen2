@@ -76,7 +76,7 @@ class Config:
     def __init__(self):
         self.file_ext         = os.environ.get('AZURE_FILE_EXT')
         self.storage_cache_db = os.environ.get('AZURE_STORAGE_CACHE')
-        self.error_log        = os.environ.get('AZURE_ERROR_LOG', "error.log")
+#        self.error_log        = os.environ.get('AZURE_ERROR_LOG', "error.log")
 
         # Data Culpa parameters
         self.pipeline_name      = os.environ.get('DC_PIPELINE_NAME')
@@ -88,10 +88,20 @@ class Config:
         self.dc_protocol        = os.environ.get('DC_PROTOCOL')
         self.dc_secret          = os.environ.get('DC_SECRET')
 
-        self.directory_is_stage = os.environ.get('DC_DIR_IS_STAGE', False)
 
-        if self.directory_is_stage:
-            assert self.pipeline_stage is None, "cannot set both DC_PIPELINE_STAGE and DC_DIR_IS_STAGE"
+# FIXME: support this
+
+# Turn on this parameter to make each top-level directory in the Data Lake go 
+# to its own 'stage' step in the pipeline.  We might actually want the directory 
+# to map into Data Culpa as root/<pipeline>/<stage> or some other mapping provided
+# by the user somehow... not sure how people organize this stuff or how much 'fan out'
+# of this pipeline importer people will wind up with.
+#DC_DIR_IS_STAGE = 
+
+#        self.directory_is_stage = os.environ.get('DC_DIR_IS_STAGE', False)
+#
+#        if self.directory_is_stage:
+#            assert self.pipeline_stage is None, "cannot set both DC_PIPELINE_STAGE and DC_DIR_IS_STAGE"
 
 fcache = {} 
 new_cache = {}
