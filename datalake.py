@@ -187,7 +187,6 @@ def ProcessDateFile(fs_client, file_path):
     # Assume a CSV blob, which we will push up.
 
     # FIXME: tease out the top-level directory for pipeline_stage.
-    dc = NewDataCulpaHandle()
 
     # FIXME: add short-circuit approach; if we're on the same 
     # machine as the DC controller, no need to move the data twice; we just
@@ -208,10 +207,14 @@ def ProcessDateFile(fs_client, file_path):
 
     try:
         if tmp_name.endswith(".csv"):
+            dc = NewDataCulpaHandle()
             worked = dc.load_csv_file(tmp_name)
             print("worked:", worked)
+            dc.queue_commit()
         elif tmp_name.endswith(".json"):
             # load it and send it?
+            sys.stderr.write("We don't handle json files right now.\n");
+            os._exit(2)
             pass
     except Exception as e:
         # try to remove the file
