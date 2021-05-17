@@ -32,10 +32,9 @@ import os
 import uuid
 import sqlite3
 import sys
-#import tempfile
-
 
 from dateutil.parser import parse as DateUtilParse
+from datetime import datetime, timedelta, timezone
 
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.core._match_conditions import MatchConditions
@@ -164,7 +163,7 @@ def FlushNewCache():
     return
 
 
-def NewDataCulpaHandle(pipeline_stage=None):
+def NewDataCulpaHandle(pipeline_stage=None, timeshift=None):
     if pipeline_stage is None:
         pipeline_stage = gConfig.pipeline_stage
 
@@ -174,10 +173,11 @@ def NewDataCulpaHandle(pipeline_stage=None):
                             pipeline_version=gConfig.pipeline_version,
                             protocol=gConfig.dc_protocol, 
                             dc_host=gConfig.dc_host, 
-                            dc_port=gConfig.dc_port)
+                            dc_port=gConfig.dc_port,
+                            timeshift=timeshift)
     return dc
 
-def ProcessDateFile(fs_client, file_path):
+def ProcessDateFile(fs_client, file_path, file_mod_time):
     if gConfig.file_ext is not None:
         if not file_path.endswith(gConfig.file_ext):
             print(">> %s does not match configured file_ext %s; skipping" % (file_path, gConfig.file_ext))
@@ -185,12 +185,8 @@ def ProcessDateFile(fs_client, file_path):
     print(">> %s is new and needs processing, here we go!" % file_path)
 
     # Assume a CSV blob, which we will push up.
-
-    # FIXME: tease out the top-level directory for pipeline_stage.
-
-    # FIXME: add short-circuit approach; if we're on the same 
-    # machine as the DC controller, no need to move the data twice; we just
-    # need to fetch it... but that's for another day.
+    dt_now = datetime.now(timezone.utc)
+    dt_delta = (dt_now - file_mod_time).total_seconds()
 
     # seems we need the directory handle... hopefully Azure is a forward slash environment
     dir_path = os.path.dirname(file_path)
@@ -207,7 +203,7 @@ def ProcessDateFile(fs_client, file_path):
 
     try:
         if tmp_name.endswith(".csv"):
-            dc = NewDataCulpaHandle()
+            dc = NewDataCulpaHandle(timeshift=dt_delta)
             worked = dc.load_csv_file(tmp_name)
             print("worked:", worked)
             dc.queue_commit()
@@ -233,7 +229,7 @@ def WalkPaths(fs_client, path):
     for p in paths:
         if p.is_directory:
             continue
-#dateutil.parser.
+
         lm_time = DateUtilParse(p.last_modified)
         #print(p.name, p.last_modified, lm_time) #type(p.last_modified))
 
@@ -252,7 +248,7 @@ def WalkPaths(fs_client, path):
         if existing != p.last_modified:
             print("%s has changed; reprocessing..." % p.name)
 
-        ProcessDateFile(fs_client, p.name)
+        ProcessDateFile(fs_client, p.name, lm_time)
         new_cache[p.name] = p.last_modified
     # endfor
 
